@@ -9,7 +9,26 @@ Author URI: codeclouds.com
 
 // Your plugin code goes here
 
+register_activation_hook( __FILE__, 'wp_create_order_gateway_data_table' );
+function wp_create_order_gateway_data_table() {
+    global $wpdb;
 
+    $table_name = $wpdb->prefix . 'order_gateway_data';
+
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE $table_name (
+        id int NOT NULL AUTO_INCREMENT,
+        order_id int NOT NULL,
+        payment_url varchar(500),
+        store_code varchar(250),
+        created_at datetime DEFAULT CURRENT_TIMESTAMP() NOT NULL,
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta( $sql );
+}
 
 
 add_action('plugins_loaded', 'woocommerce_stripe_hosted_gateway_plugin', 0);

@@ -3,8 +3,12 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   
  // Deifine variables
   public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details;     
+  public $wpdb;
   // Constructor method
   public function __construct() {
+    global $wpdb;
+
+    $this->wpdb = $wpdb;
     $this->id = 'stripe_hosted_gateway';
     $this->method_title = 'Stripe Hosted Checkout';
     $this->method_description = 'Customers pay using Stripe Hosted Checkout';
@@ -187,7 +191,6 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     global $woocommerce;
 
     $OrderDataRaw = wc_get_order($order_id);
-    $OrderData = $OrderDataRaw->data;
     $OrderDataRaw->update_status( 'cancelled' );
     
     
@@ -200,11 +203,22 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
     $paymenturl = $this->payment_link;
 
-    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&wc_key='.$OrderDataRaw->order_key;
+    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key;
+    $storeCode = $this->store_code;
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
     $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
     $OrderDataRaw->add_order_note( 'Payment Link: '.$PaymentRedirectUrl );
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
+
+    try {
+      $this->wpdb->insert('wp_order_gateway_data', array(
+        'order_id' => $order_id,
+        'payment_url' => $PaymentRedirectUrl,
+        'store_code' => $storeCode,
+      ));
+    } catch (\Throwable $th) {
+      //throw $th;
+    }
    
     if($skipCardMax){ 
         $error_message = "Order Total must be less than ".$this->max_order_total;
