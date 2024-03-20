@@ -25,7 +25,8 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $this->enabled = $this->get_option( 'enabled' );
 
     $this->checkoutbuttontext = $this->get_option( 'checkoutbuttontext' );
-    $this->testmode = $this->get_option( 'testmode' ) ?? 'yes';
+    $this->testmode = 'yes' === $this->get_option( 'testmode' );
+
     $this->statement_descriptor = $this->get_option( 'statement_descriptor' );
     $this->max_order_total = $this->get_option( 'max_order_total' );
     $this->min_order_total = $this->get_option( 'min_order_total' );
@@ -132,7 +133,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
       ob_start();
 
-
+echo  $this->testmode ;
       require_once "safe_site_details_html.php";
       
       return ob_get_clean();
@@ -202,8 +203,8 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $paymentSiteData = $this->get_payment_site_data();
 
     $paymenturl = $paymentSiteData['safe_payment_link'] ?? "";
-
-    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key.'&test_mode='.$this->testmode;
+    if ($this->testmode) { $TestParam = '&test=yes'; }
+    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key.$TestParam;
 
     $storeCode = $paymentSiteData['safe_store_code'] ?? "";
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
