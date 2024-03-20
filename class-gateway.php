@@ -3,8 +3,12 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   
  // Deifine variables
   public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details;     
+  public $wpdb;
   // Constructor method
   public function __construct() {
+    global $wpdb;
+
+    $this->wpdb = $wpdb;
     $this->id = 'stripe_hosted_gateway';
     $this->method_title = 'Stripe Hosted Checkout';
     $this->method_description = 'Customers pay using Stripe Hosted Checkout';
@@ -12,7 +16,6 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     
     $this->init_form_fields();
     $this->init_settings();
-
 
 
 
@@ -197,14 +200,29 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $skipCardMax = ($cart_total > $this->max_order_total)?true:false;
     $skipCardMin = ($cart_total < $this->min_order_total)?true:false;
 
+    $paymentSiteData = $this->get_payment_site_data();
 
     $paymenturl = $this->payment_link;
+
+
 
     $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&wc_key='.$OrderDataRaw->order_key;
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
     $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
     $OrderDataRaw->add_order_note( 'Payment Link: '.$PaymentRedirectUrl );
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
+
+    $storeCode = $this->store_code;
+
+    // try {
+    //   $this->wpdb->insert('wp_order_gateway_data', array(
+    //     'order_id' => $order_id,
+    //     'payment_url' => $PaymentRedirectUrl,
+    //     'store_code' => $storeCode,
+    //   ));
+    // } catch (\Throwable $th) {
+    //   //throw $th;
+    // }
    
     if($skipCardMax){ 
         $error_message = "Order Total must be less than ".$this->max_order_total;
@@ -224,27 +242,38 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
  
   
     return array(
-      'result'   => 'success',
+      'result'   => 'fail',
       'redirect' => $PaymentRedirectUrl,
     );
   }
 
 
-  	public function encrypt_decrypt($string, $action = 'encrypt')
-		{
-      $encrypt_method = "AES-256-CBC";
-      $secret_key = 'AUJRDMGNSAMBJTTVUJNNGMCLC';      // user define private key
-      $secret_iv = 'bFArbEMzzguOOnN';                 // user define secret key
-      $key = hash('sha256', $secret_key);
-      $iv = substr(hash('sha256', $secret_iv), 0, 16); // sha256 is hash_hmac_algo
-      if ($action == 'encrypt') {
-        $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
-        $output = base64_encode($output);
-      } else if ($action == 'decrypt') {
-        $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
-      }
-      return $output;
+  public function get_payment_site_data() {
+    $allSiteDataArray = array();
+    foreach($this->safe_site_details as $siteData) {
+      array_push($allSiteDataArray, $siteData);
     }
+    $siteArrayLength = sizeof($allSiteDataArray);
+    $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
+    $paymentSiteData = $allSiteDataArray[$randNum];
+    return $paymentSiteData;
+  }
+
+  public function encrypt_decrypt($string, $action = 'encrypt')
+  {
+    $encrypt_method = "AES-256-CBC";
+    $secret_key = 'AUJRDMGNSAMBJTTVUJNNGMCLC';      // user define private key
+    $secret_iv = 'bFArbEMzzguOOnN';                 // user define secret key
+    $key = hash('sha256', $secret_key);
+    $iv = substr(hash('sha256', $secret_iv), 0, 16); // sha256 is hash_hmac_algo
+    if ($action == 'encrypt') {
+      $output = openssl_encrypt($string, $encrypt_method, $key, 0, $iv);
+      $output = base64_encode($output);
+    } else if ($action == 'decrypt') {
+      $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
+    }
+    return $output;
+  }
   
 }
 

@@ -35,8 +35,8 @@
                             
                         </td>
                         <td>
-                            <strong>Total Order Price: <?=$orderStat['total_price']?></strong><br>
-                            <strong>Total Order Count: <?=$orderStat['total_order']?></strong>
+                            <strong>Total Order Price: <?=$orderStat['total_price'] ?? "NA" ?></strong><br>
+                            <strong>Total Order Count: <?=$orderStat['total_order'] ?? "NA" ?></strong>
                         </td>
                     </tr>
                     <?php
