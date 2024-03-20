@@ -25,7 +25,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $this->enabled = $this->get_option( 'enabled' );
 
     $this->checkoutbuttontext = $this->get_option( 'checkoutbuttontext' );
-    $this->testmode = 'yes' === $this->get_option( 'testmode' );
+    $this->testmode = $this->get_option( 'testmode' ) ?? 'yes';
     $this->statement_descriptor = $this->get_option( 'statement_descriptor' );
     $this->max_order_total = $this->get_option( 'max_order_total' );
     $this->min_order_total = $this->get_option( 'min_order_total' );
@@ -190,7 +190,6 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     global $woocommerce;
 
     $OrderDataRaw = wc_get_order($order_id);
-    $OrderData = $OrderDataRaw->data;
     $OrderDataRaw->update_status( 'cancelled' );
     
     
@@ -202,27 +201,25 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
     $paymentSiteData = $this->get_payment_site_data();
 
-    $paymenturl = $this->payment_link;
+    $paymenturl = $paymentSiteData['safe_payment_link'] ?? "";
 
+    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key.'&test_mode='.$this->testmode;
 
-
-    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&wc_key='.$OrderDataRaw->order_key;
+    $storeCode = $paymentSiteData['safe_store_code'] ?? "";
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
     $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
     $OrderDataRaw->add_order_note( 'Payment Link: '.$PaymentRedirectUrl );
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
 
-    $storeCode = $this->store_code;
-
-    // try {
-    //   $this->wpdb->insert('wp_order_gateway_data', array(
-    //     'order_id' => $order_id,
-    //     'payment_url' => $PaymentRedirectUrl,
-    //     'store_code' => $storeCode,
-    //   ));
-    // } catch (\Throwable $th) {
-    //   //throw $th;
-    // }
+    try {
+      $this->wpdb->insert('wp_order_gateway_data', array(
+        'order_id' => $order_id,
+        'payment_url' => $PaymentRedirectUrl,
+        'store_code' => $storeCode,
+      ));
+    } catch (\Throwable $th) {
+      //throw $th;
+    }
    
     if($skipCardMax){ 
         $error_message = "Order Total must be less than ".$this->max_order_total;
@@ -242,7 +239,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
  
   
     return array(
-      'result'   => 'fail',
+      'result'   => 'success',
       'redirect' => $PaymentRedirectUrl,
     );
   }
