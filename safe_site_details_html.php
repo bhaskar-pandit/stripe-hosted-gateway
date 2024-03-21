@@ -20,7 +20,29 @@
                 <?php
                 $i = -1;
 
-                if ( $this->safe_site_details ) {
+                if ( $this->safe_site_order_stat_data ) {
+                  foreach ( $this->safe_site_order_stat_data as $safe_site ) {
+                    $i++;
+
+                    ?>
+                    <tr class="account">
+                        <td class="sort"></td>
+                        <td><input type="text" value="<?= esc_attr( $safe_site->site_data['safe_store_code'] ) ?>" name="safe_store_code[<?= esc_attr( $i ) ?>]" /></td>
+                        <td><input type="text" value="<?= esc_attr( $safe_site->site_data['safe_payment_link'] ) ?>" name="safe_payment_link[<?= esc_attr( $i ) ?>]" /></td>
+                        
+                        <td>
+                            <input type="text" value="<?= esc_attr( $safe_site->site_data['cap_amount'] ) ?>" name="cap_amount[<?= esc_attr( $i ) ?>]" /> <br>
+                            
+                        </td>
+                        <td>
+                            <strong>Total Order Price: $<?=number_format($safe_site->site_total_order_amount, 2, ".", "") ?? 0.00 ?></strong><br>
+                            <strong>Total Order Count: <?=$safe_site->site_total_orders ?? 0 ?></strong>
+                        </td>
+                    </tr>
+                    <?php
+                  }
+                }
+                else {
                   foreach ( $this->safe_site_details as $safe_site ) {
                     $i++;
 
@@ -35,8 +57,8 @@
                             
                         </td>
                         <td>
-                            <strong>Total Order Price: <?=$orderStat['total_price'] ?? "NA" ?></strong><br>
-                            <strong>Total Order Count: <?=$orderStat['total_order'] ?? "NA" ?></strong>
+                            <strong>Total Order Price: $0.00</strong><br>
+                            <strong>Total Order Count: 0</strong>
                         </td>
                     </tr>
                     <?php
