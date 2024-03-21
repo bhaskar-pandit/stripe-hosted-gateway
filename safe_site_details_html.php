@@ -12,8 +12,9 @@
                   <th class="sort" style="width: 3%;">&nbsp;</th>
                   <th style="width: 15%;"><?php esc_html_e( 'Code', 'woocommerce' ); ?></th>
                   <th><?php esc_html_e( 'Payment Link', 'woocommerce' ); ?></th>
-                  <th style="width: 15%;"><?php esc_html_e( 'Cap Amount', 'woocommerce' ); ?></th>
+                  <th style="width: 15%;"><?php esc_html_e( 'Cap Amount', 'woocommerce' ); ?>(<?=get_woocommerce_currency_symbol()?>)</th>
                   <th style="width: 20%;"><?php esc_html_e( 'Stats', 'woocommerce' ); ?></th>
+                  <th style="width: 20%;"><?php esc_html_e( 'Today Stats', 'woocommerce' ); ?></th>
                 </tr>
               </thead>
               <tbody class="accounts">
@@ -27,28 +28,6 @@
                     ?>
                     <tr class="account">
                         <td class="sort"></td>
-                        <td><input type="text" value="<?= esc_attr( $safe_site->site_data['safe_store_code'] ) ?>" name="safe_store_code[<?= esc_attr( $i ) ?>]" /></td>
-                        <td><input type="text" value="<?= esc_attr( $safe_site->site_data['safe_payment_link'] ) ?>" name="safe_payment_link[<?= esc_attr( $i ) ?>]" /></td>
-                        
-                        <td>
-                            <input type="text" value="<?= esc_attr( $safe_site->site_data['cap_amount'] ) ?>" name="cap_amount[<?= esc_attr( $i ) ?>]" /> <br>
-                            
-                        </td>
-                        <td>
-                            <strong>Total Order Price: $<?=number_format($safe_site->site_total_order_amount, 2, ".", "") ?? 0.00 ?></strong><br>
-                            <strong>Total Order Count: <?=$safe_site->site_total_orders ?? 0 ?></strong>
-                        </td>
-                    </tr>
-                    <?php
-                  }
-                }
-                else {
-                  foreach ( $this->safe_site_details as $safe_site ) {
-                    $i++;
-
-                    ?>
-                    <tr class="account">
-                        <td class="sort"></td>
                         <td><input type="text" value="<?= esc_attr( $safe_site['safe_store_code'] ) ?>" name="safe_store_code[<?= esc_attr( $i ) ?>]" /></td>
                         <td><input type="text" value="<?= esc_attr( $safe_site['safe_payment_link'] ) ?>" name="safe_payment_link[<?= esc_attr( $i ) ?>]" /></td>
                         
@@ -57,8 +36,12 @@
                             
                         </td>
                         <td>
-                            <strong>Total Order Price: $0.00</strong><br>
-                            <strong>Total Order Count: 0</strong>
+                            <strong>Total Order Price: <?=get_woocommerce_currency_symbol()?><?=number_format(property_exists($safe_site['stat_data'], 'site_total_order_amount') ? $safe_site['stat_data']->site_total_order_amount : 0, 2, ".", "") ?></strong><br>
+                            <strong>Total Order Count: <?=$safe_site['stat_data']->site_total_orders ?? 0 ?></strong>
+                        </td>
+                        <td>
+                          <strong>Total Order Price: <?=get_woocommerce_currency_symbol()?><?=number_format(property_exists($safe_site['today_stat_data'], 'site_total_order_amount') ? $safe_site['today_stat_data']->site_total_order_amount : 0, 2, ".", "") ?></strong><br>
+                          <strong>Total Order Count: <?=$safe_site['today_stat_data']->site_total_orders ?? 0 ?></strong>
                         </td>
                     </tr>
                     <?php
