@@ -162,7 +162,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
   	public function generate_safe_site_details_html() {
       ob_start();
-      echo  $this->testmode;
+      // echo  $this->testmode;
       require_once "safe_site_details_html.php";
       return ob_get_clean();
     }
@@ -267,7 +267,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
  
   
     return array(
-      'result'   => 'fail',
+      'result'   => 'success',
       'redirect' => $PaymentRedirectUrl,
     );
   }
@@ -278,6 +278,8 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     foreach($this->safe_site_details as $siteData) {
       array_push($allSiteDataArray, $siteData);
     }
+
+
     $siteArrayLength = sizeof($allSiteDataArray);
     $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
     $paymentSiteData = $allSiteDataArray[$randNum];
