@@ -3,7 +3,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   
  // Deifine variables
   public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details;     
-  public $wpdb;
+  public $wpdb, $safe_site_order_stat_data = array();
   // Constructor method
   public function __construct() {
     global $wpdb;
@@ -45,12 +45,20 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 				),
 			)
 		);
+
+    $tablePrefix = $this->wpdb->prefix;
+    $sqlQuery = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+      
+    $siteStatData = $this->wpdb->get_results($sqlQuery);
+
+    foreach($siteStatData as $data) {
+      $siteData = $this->safe_site_details[$data->store_code];
+      $data->site_data = $siteData;
+      array_push($this->safe_site_order_stat_data, $data);
+    }
     
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );
-
-
-
 
   }
   
@@ -130,14 +138,10 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
 
   	public function generate_safe_site_details_html() {
-
       ob_start();
-
-echo  $this->testmode ;
+      echo  $this->testmode;
       require_once "safe_site_details_html.php";
-      
       return ob_get_clean();
-
     }
 
     /**
@@ -213,7 +217,7 @@ echo  $this->testmode ;
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
 
     try {
-      $this->wpdb->insert('wp_order_gateway_data', array(
+      $this->wpdb->insert($this->wpdb->prefix.'order_gateway_data', array(
         'order_id' => $order_id,
         'payment_url' => $PaymentRedirectUrl,
         'store_code' => $storeCode,
@@ -240,7 +244,7 @@ echo  $this->testmode ;
  
   
     return array(
-      'result'   => 'success',
+      'result'   => 'fail',
       'redirect' => $PaymentRedirectUrl,
     );
   }
