@@ -47,13 +47,36 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 		);
 
     $tablePrefix = $this->wpdb->prefix;
-    $sqlQuery = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
-      
-    $siteStatData = $this->wpdb->get_results($sqlQuery);
 
-    foreach($siteStatData as $data) {
-      $siteData = $this->safe_site_details[$data->store_code];
-      $data->site_data = $siteData;
+    // Overall stat data
+    $statSqlQuery = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+      
+    $siteStatData = $this->wpdb->get_results($statSqlQuery);
+
+    // Today's stat data
+    $todayStatSqlQuery = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id WHERE DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+
+    $todaySiteStatData = $this->wpdb->get_results($todayStatSqlQuery);
+
+    foreach($this->safe_site_details as $data) {
+      $statDataKey = array_search($data['safe_store_code'], array_column($siteStatData, 'store_code'));
+      $todayStatDataKey = array_search($data['safe_store_code'], array_column($todaySiteStatData, 'store_code'));
+      
+      if($statDataKey !== false) {
+        $statData = $siteStatData[$statDataKey];
+      }
+      else {
+        $statData = (object)array();
+      }
+      
+      if($statDataKey !== false) {
+        $todayStatData = $todaySiteStatData[$todayStatDataKey];
+      }
+      else {
+        $todayStatData = (object)array();
+      }
+      $data['stat_data'] = $statData;
+      $data['today_stat_data'] = $todayStatData;
       array_push($this->safe_site_order_stat_data, $data);
     }
     
