@@ -231,6 +231,8 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $skipCardMin = ($cart_total < $this->min_order_total)?true:false;
 
     $paymentSiteData = $this->get_payment_site_data();
+    // print_r($paymentSiteData);
+    // exit;
 
     $paymenturl = $paymentSiteData['safe_payment_link'] ?? "";
     if ($this->testmode) { $TestParam = '&test=yes'; }
@@ -278,32 +280,61 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
   public function get_payment_site_data() {
     $todayAllSiteStatData = $this->wpdb->get_results($this->today_stat_query);
-    
+
     $allSiteDataArray = array();
     if(!empty($todayAllSiteStatData)) {
       foreach($this->safe_site_details as $data) {
         $todayStatDataKey = array_search($data['safe_store_code'], array_column($todayAllSiteStatData, 'store_code'));
-        
         if($todayStatDataKey !== false) {
           $todayStatData = $todayAllSiteStatData[$todayStatDataKey];
           if($todayStatData->site_total_orders < $data['cap_order_count'] && $todayStatData->site_total_order_amount < $data['cap_amount']) {
+            $data['today_order_amount'] = $todayStatData->site_total_order_amount;
+            $data['today_order_count'] = $todayStatData->site_total_orders;
+            
+            $data['remain_order_amount'] = ((float) $data['cap_amount'] - (float) $todayStatData->site_total_order_amount);
+            $data['remain_order_count'] = ((float) $data['cap_order_count'] - (float) $todayStatData->site_total_orders);
             // $data['today_stat_data'] = $todayStatData;
             array_push($allSiteDataArray, $data);
           }
+          // else {
+          //   $data['today_order_amount'] = 0;
+          //   $data['today_order_count'] = 0;
+
+          //   $data['remain_order_amount'] = ((float) $data['cap_amount'] - 0);
+          //   $data['remain_order_count'] = ((float) $data['cap_order_count'] - 0);
+          // }
+        }
+        else {
+          $data['today_order_amount'] = 0;
+          $data['today_order_count'] = 0;
+
+          $data['remain_order_amount'] = ((float) $data['cap_amount'] - 0);
+          $data['remain_order_count'] = ((float) $data['cap_order_count'] - 0);
+          array_push($allSiteDataArray, $data);
         }
       }
     }
     else {
       foreach($this->safe_site_details as $data) {
+        $data['today_order_amount'] = 0;
+        $data['today_order_count'] = 0;
+
+        $data['remain_order_amount'] = ((float) $data['cap_amount'] - 0);
+        $data['remain_order_count'] = ((float) $data['cap_order_count'] - 0);
         array_push($allSiteDataArray, $data);
       }
     }
 
-    $siteArrayLength = sizeof($allSiteDataArray);
-    $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
-    $paymentSiteData = $allSiteDataArray[$randNum];
-    // print_r($paymentSiteData);
+    uasort($allSiteDataArray, fn($a, $b) => $b['remain_order_amount'] <=> $a['remain_order_amount']);
+    $newStatArr = $allSiteDataArray;
+    // print_r(array_shift($newStatArr));
     // exit;
+    $paymentSiteData = array_shift($newStatArr);
+
+    // $siteArrayLength = sizeof($allSiteDataArray);
+    // $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
+    // $paymentSiteData = $allSiteDataArray[$randNum];
+
     return $paymentSiteData;
   }
 
