@@ -25,7 +25,7 @@ function wp_create_order_gateway_data_table() {
         store_code varchar(250),
         created_at datetime DEFAULT CURRENT_TIMESTAMP() NOT NULL,
         PRIMARY KEY (id),
-        FOREIGN KEY (order_id) REFERENCES wp_wc_orders(id)
+        FOREIGN KEY (order_id) REFERENCES ".$wpdb->prefix."wc_orders(id)
     ) $charset_collate;";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
