@@ -13,7 +13,8 @@
                   <th style="width: 15%;"><?php esc_html_e( 'Code', 'woocommerce' ); ?></th>
                   <th><?php esc_html_e( 'Payment Link', 'woocommerce' ); ?></th>
                   <th style="width: 15%;"><?php esc_html_e( 'Cap Amount', 'woocommerce' ); ?>(<?=get_woocommerce_currency_symbol()?>)</th>
-                  <th style="width: 20%;"><?php esc_html_e( 'Stats', 'woocommerce' ); ?></th>
+                  <th style="width: 15%;"><?php esc_html_e( 'Cap Order Count', 'woocommerce' ); ?></th>
+                  <th style="width: 20%;"><?php esc_html_e( 'Total Stats', 'woocommerce' ); ?></th>
                   <th style="width: 20%;"><?php esc_html_e( 'Today Stats', 'woocommerce' ); ?></th>
                 </tr>
               </thead>
@@ -36,12 +37,16 @@
                             
                         </td>
                         <td>
-                            <strong>Total Order Price: <?=get_woocommerce_currency_symbol()?><?=number_format(property_exists($safe_site['stat_data'], 'site_total_order_amount') ? $safe_site['stat_data']->site_total_order_amount : 0, 2, ".", "") ?></strong><br>
-                            <strong>Total Order Count: <?=$safe_site['stat_data']->site_total_orders ?? 0 ?></strong>
+                            <input type="text" value="<?= esc_attr( $safe_site['cap_order_count'] ) ?>" name="cap_order_count[<?= esc_attr( $i ) ?>]" /> <br>
+                            
                         </td>
                         <td>
-                          <strong>Total Order Price: <?=get_woocommerce_currency_symbol()?><?=number_format(property_exists($safe_site['today_stat_data'], 'site_total_order_amount') ? $safe_site['today_stat_data']->site_total_order_amount : 0, 2, ".", "") ?></strong><br>
-                          <strong>Total Order Count: <?=$safe_site['today_stat_data']->site_total_orders ?? 0 ?></strong>
+                            <strong>Order Price: <?=get_woocommerce_currency_symbol()?><?=number_format(property_exists($safe_site['stat_data'], 'site_total_order_amount') ? $safe_site['stat_data']->site_total_order_amount : 0, 2, ".", "") ?></strong><br>
+                            <strong>Order Count: <?=$safe_site['stat_data']->site_total_orders ?? 0 ?></strong>
+                        </td>
+                        <td>
+                          <strong>Order Price: <?=get_woocommerce_currency_symbol()?><?=number_format(property_exists($safe_site['today_stat_data'], 'site_total_order_amount') ? $safe_site['today_stat_data']->site_total_order_amount : 0, 2, ".", "") ?></strong><br>
+                          <strong>Order Count: <?=$safe_site['today_stat_data']->site_total_orders ?? 0 ?></strong>
                         </td>
                     </tr>
                     <?php
@@ -67,6 +72,8 @@
                     <td><input type="text" name="safe_store_code[' + size + ']" /></td>\
                     <td><input type="text" name="safe_payment_link[' + size + ']" /></td>\
                     <td><input type="text" name="cap_amount[' + size + ']" /></td>\
+                    <td><input type="text" name="cap_order_count[' + size + ']" /></td>\
+                    <td></td>\
                     <td></td>\
                   </tr>').appendTo('#accounts table tbody');
 
