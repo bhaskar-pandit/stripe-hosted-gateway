@@ -3,7 +3,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   
  // Deifine variables
   public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details;     
-  public $wpdb, $safe_site_order_stat_data = array();
+  public $wpdb, $safe_site_order_stat_data = array(), $stat_data_query, $today_stat_query;
   // Constructor method
   public function __construct() {
     global $wpdb;
@@ -41,44 +41,20 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 				array(
 					'safe_store_code'   => $this->get_option( 'safe_store_code' ),
 					'safe_payment_link' => $this->get_option( 'safe_payment_link' ),
-					'cap_amount'      => $this->get_option( 'cap_amount' )
+					'cap_amount'      => $this->get_option( 'cap_amount' ),
+					'cap_order_count'      => $this->get_option( 'cap_order_count' ),
 				),
 			)
 		);
 
     $tablePrefix = $this->wpdb->prefix;
 
-    // Overall stat data
-    $statSqlQuery = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
-      
-    $siteStatData = $this->wpdb->get_results($statSqlQuery);
+    
+    // Overall stat data query
+    $this->stat_data_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
 
-    // Today's stat data
-    $todayStatSqlQuery = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id WHERE DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
-
-    $todaySiteStatData = $this->wpdb->get_results($todayStatSqlQuery);
-
-    foreach($this->safe_site_details as $data) {
-      $statDataKey = array_search($data['safe_store_code'], array_column($siteStatData, 'store_code'));
-      $todayStatDataKey = array_search($data['safe_store_code'], array_column($todaySiteStatData, 'store_code'));
-      
-      if($statDataKey !== false) {
-        $statData = $siteStatData[$statDataKey];
-      }
-      else {
-        $statData = (object)array();
-      }
-      
-      if($statDataKey !== false) {
-        $todayStatData = $todaySiteStatData[$todayStatDataKey];
-      }
-      else {
-        $todayStatData = (object)array();
-      }
-      $data['stat_data'] = $statData;
-      $data['today_stat_data'] = $todayStatData;
-      array_push($this->safe_site_order_stat_data, $data);
-    }
+    // Today's stat data query
+    $this->today_stat_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_orders.id) AS site_total_orders, SUM(".$tablePrefix."wc_orders.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_orders ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_orders.id WHERE ".$tablePrefix."order_gateway_data.store_code<>'' AND DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
     
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );
@@ -142,15 +118,15 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
               'description' => 'If user dont add this amount in cart then they cannot place order using credit card.',
               'desc_tip'    => true,
           ),
-          'cap_type'        => array(
-              'title'         => __( 'Load Balancing Cap Type', 'woocommerce' ),
-              'type'          => 'select',
-              'default'       => 'price',
-              'options'       => array(
-                'price'       => __( 'Price', 'woocommerce' ),
-                'Percentage'  => __( 'Percentage', 'woocommerce' ),
-              ),
-          ),
+          // 'cap_type'        => array(
+          //     'title'         => __( 'Load Balancing Cap Type', 'woocommerce' ),
+          //     'type'          => 'select',
+          //     'default'       => 'price',
+          //     'options'       => array(
+          //       'price'       => __( 'Price', 'woocommerce' ),
+          //       'Percentage'  => __( 'Percentage', 'woocommerce' ),
+          //     ),
+          // ),
           'safe_site_details' => array(
             'type' => 'safe_site_details',
           ),
@@ -162,7 +138,32 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
   	public function generate_safe_site_details_html() {
       ob_start();
-      // echo  $this->testmode;
+      
+      $siteStatData = $this->wpdb->get_results($this->stat_data_query);
+      $todaySiteStatData = $this->wpdb->get_results($this->today_stat_query);
+      
+      foreach($this->safe_site_details as $data) {
+        $statDataKey = array_search($data['safe_store_code'], array_column($siteStatData, 'store_code'));
+        $todayStatDataKey = array_search($data['safe_store_code'], array_column($todaySiteStatData, 'store_code'));
+
+        if($statDataKey !== false) {
+          $statData = $siteStatData[$statDataKey];
+        }
+        else {
+          $statData = (object)array();
+        }
+        
+        if($todayStatDataKey !== false) {
+          $todayStatData = $todaySiteStatData[$todayStatDataKey];
+        }
+        else {
+          $todayStatData = (object)array();
+        }
+        $data['stat_data'] = $statData;
+        $data['today_stat_data'] = $todayStatData;
+        array_push($this->safe_site_order_stat_data, $data);
+      }
+
       require_once "safe_site_details_html.php";
       return ob_get_clean();
     }
@@ -180,6 +181,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
         $safe_store_codes    = wc_clean( wp_unslash( $_POST['safe_store_code'] ) );
         $safe_payment_links   = wc_clean( wp_unslash( $_POST['safe_payment_link'] ) );
         $cap_amounts            = wc_clean( wp_unslash( $_POST['cap_amount'] ) );
+        $cap_order_counts          = wc_clean( wp_unslash( $_POST['cap_order_count'] ) );
        
 
         foreach ( $safe_store_codes as $i => $name ) {
@@ -191,6 +193,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
             'safe_store_code'      => $safe_store_codes[ $i ],
             'safe_payment_link'    => $safe_payment_links[ $i ],
             'cap_amount'        => $cap_amounts[ $i ],
+            'cap_order_count'        => $cap_order_counts[ $i ],
           );
         }
       }
@@ -274,15 +277,33 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
 
   public function get_payment_site_data() {
+    $todayAllSiteStatData = $this->wpdb->get_results($this->today_stat_query);
+    
     $allSiteDataArray = array();
-    foreach($this->safe_site_details as $siteData) {
-      array_push($allSiteDataArray, $siteData);
+    if(!empty($todayAllSiteStatData)) {
+      foreach($this->safe_site_details as $data) {
+        $todayStatDataKey = array_search($data['safe_store_code'], array_column($todayAllSiteStatData, 'store_code'));
+        
+        if($todayStatDataKey !== false) {
+          $todayStatData = $todayAllSiteStatData[$todayStatDataKey];
+          if($todayStatData->site_total_orders < $data['cap_order_count'] && $todayStatData->site_total_order_amount < $data['cap_amount']) {
+            // $data['today_stat_data'] = $todayStatData;
+            array_push($allSiteDataArray, $data);
+          }
+        }
+      }
     }
-
+    else {
+      foreach($this->safe_site_details as $data) {
+        array_push($allSiteDataArray, $data);
+      }
+    }
 
     $siteArrayLength = sizeof($allSiteDataArray);
     $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
     $paymentSiteData = $allSiteDataArray[$randNum];
+    // print_r($paymentSiteData);
+    // exit;
     return $paymentSiteData;
   }
 
