@@ -325,15 +325,15 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
       }
     }
 
-    uasort($allSiteDataArray, fn($a, $b) => $b['remain_order_amount'] <=> $a['remain_order_amount']);
-    $newStatArr = $allSiteDataArray;
+    // uasort($allSiteDataArray, fn($a, $b) => $b['remain_order_amount'] <=> $a['remain_order_amount']);
+    // $newStatArr = $allSiteDataArray;
     // print_r(array_shift($newStatArr));
     // exit;
-    $paymentSiteData = array_shift($newStatArr);
+    // $paymentSiteData = array_shift($newStatArr);
 
-    // $siteArrayLength = sizeof($allSiteDataArray);
-    // $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
-    // $paymentSiteData = $allSiteDataArray[$randNum];
+    $siteArrayLength = sizeof($allSiteDataArray);
+    $randNum = $siteArrayLength > 0 ? rand(0 , ($siteArrayLength-1)) : 0;
+    $paymentSiteData = $allSiteDataArray[$randNum];
 
     return $paymentSiteData;
   }
