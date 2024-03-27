@@ -24,9 +24,9 @@ function wp_create_order_gateway_data_table() {
         payment_url varchar(500),
         store_code varchar(250),
         created_at datetime DEFAULT CURRENT_TIMESTAMP() NOT NULL,
-        PRIMARY KEY (id),
-        FOREIGN KEY (order_id) REFERENCES ".$wpdb->prefix."wc_order_stats(order_id)
+        PRIMARY KEY (id)
     ) $charset_collate;";
+    // FOREIGN KEY (order_id) REFERENCES ".$wpdb->prefix."wc_order_stats(order_id)
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta( $sql );

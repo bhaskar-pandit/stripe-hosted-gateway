@@ -218,7 +218,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   // Process the payment
   public function process_payment($order_id) {
 
-    global $woocommerce;
+    global $woocommerce, $wpdb;
 
     $OrderDataRaw = wc_get_order($order_id);
     $OrderDataRaw->update_status( 'cancelled' );
@@ -250,9 +250,11 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
         'payment_url' => $PaymentRedirectUrl,
         'store_code' => $storeCode,
       ));
-      wp_die($dbstatus);
+      wc_add_notice($this->wpdb->last_query, 'error' ); 
+      return;
     } catch (\Throwable $th) {
-      wp_die($th);
+      wc_add_notice(print_r($th,true), 'error' ); 
+      return;
     }
    
     if($skipCardMax){ 
