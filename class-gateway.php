@@ -12,7 +12,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $this->id = 'stripe_hosted_gateway';
     $this->method_title = 'Stripe Hosted Checkout';
     $this->method_description = 'Customers pay using Stripe Hosted Checkout';
-    $this->icon = plugin_dir_url( __FILE__ ) . '/images/credit-cards.png'; // URL of the icon that will be displayed on checkout page near your gateway name
+    $this->icon = plugin_dir_url( __FILE__ ) . '/assets/credit-cards.png'; // URL of the icon that will be displayed on checkout page near your gateway name
 
     // Other initialization code goes here
     
@@ -34,6 +34,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $this->min_order_total = $this->get_option( 'min_order_total' );
     $this->payment_link = $this->get_option( 'payment_link' );
     $this->store_code = $this->get_option( 'store_code' );
+    $this->is_login_pop = $this->get_option( 'is_login_pop' );
 
 
 
@@ -61,6 +62,11 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );
 
+
+    add_action( 'woocommerce_after_checkout_form', array( $this, 'add_code_on_body_open'));
+
+    
+    add_filter( 'woocommerce_available_payment_gateways', array( $this, 'cc_payment_gateway_disable'));
   }
   
   
@@ -131,6 +137,13 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
           // ),
           'safe_site_details' => array(
             'type' => 'safe_site_details',
+          ),
+          'is_login_pop' => array(
+              'title'       => 'Login Pop-Up',
+              'label'       => 'Do you Want to show login Pop-Up?',
+              'type'        => 'checkbox',
+              'default'     => 'yes',
+              'desc_tip'    => true,
           ),
          
       // Add more settings fields as needed
@@ -243,7 +256,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
     $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
     $OrderDataRaw->add_order_note( 'Payment Link: '.$PaymentRedirectUrl );
-    $OrderDataRaw->add_order_note( 'Payment Link Code: '.$this->store_code );
+    $OrderDataRaw->add_order_note( 'Payment Link Code: '.$storeCode );
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
 
     try {
@@ -342,6 +355,47 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
     return $paymentSiteData;
   }
+
+
+  public function add_code_on_body_open() {
+		if ( !is_user_logged_in() && is_checkout() && $this->is_login_pop == 'yes' ) {
+			wp_enqueue_style( 'cc-styles-css', plugin_dir_url( __FILE__ ) .'assets/styles.css',false,time(),'all'); 
+			wp_enqueue_script( 'cc-script-js', plugin_dir_url( __FILE__ ) .'assets/script.js',false,time(),'all'); 
+			echo '<div class="custom-model-pop custom-model-login bg-overlay" >
+							<div class="custom-model-inner">        
+							<!-- <div class="close-btn">×</div> -->
+								<div class="custom-model-wrap">
+									<div class="pop-up-content-wrap">
+										<!-- If you already have account with then please login with that info <a href="'.get_permalink( get_option('woocommerce_myaccount_page_id') ).'">here</a> to get the Credit Card option. -->
+                                        If you already have an exising account and would like to pay by credit card please login here
+										<div>
+											<a class="login-btn" href="'.get_permalink( get_option('woocommerce_myaccount_page_id') ).'">Login</a> 
+											<a class="nothanks-btn">No Thanks</a>
+										</div>
+
+									</div>                                
+								</div>  
+							</div>  
+						</div>';
+		}
+	}
+
+
+  function cc_payment_gateway_disable( $available_gateways ) {
+
+        $userData = wp_get_current_user();
+        $isAllowedForCCPayment = esc_attr(get_the_author_meta('isAllowedForCCPayment', $userData->data->ID ));
+         
+        if ($isAllowedForCCPayment !== 'on') {
+            unset( $available_gateways['stripe_hosted_gateway'] );
+        }
+        return $available_gateways;
+    }
+	
+
+
+
+
 
   public function encrypt_decrypt($string, $action = 'encrypt')
   {

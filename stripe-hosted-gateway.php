@@ -41,6 +41,7 @@ function woocommerce_stripe_hosted_gateway_plugin(){
         return; // if the WC payment gateway class 
 
     include(plugin_dir_path(__FILE__) . 'class-gateway.php');
+    include(plugin_dir_path(__FILE__) . 'cc-block-gateway.php');
 
     // setting link set up
     add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'stripe_hosted_gateway_action_links' );

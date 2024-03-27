@@ -1,0 +1,129 @@
+.custom-model-pop {
+	text-align: center;
+	overflow: hidden;
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	/* z-index: 1050; */
+	z-index: -1;
+	overflow-x: hidden;
+	overflow-y: auto;
+	font-family:
+		roboto condensed,
+		Sans-serif;
+}
+.custom-model-pop.bg-overlay {
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 101;
+}
+.custom-model-inner {
+	-webkit-transform: translate(0, -25%);
+	-ms-transform: translate(0, -25%);
+	transform: translate(0, -25%);
+	-webkit-transition: -webkit-transform 0.3s ease-out;
+	-o-transition: -o-transform 0.3s ease-out;
+	transition: -webkit-transform 0.3s ease-out;
+	-o-transition: transform 0.3s ease-out;
+	transition: transform 0.3s ease-out;
+	transition:
+		transform 0.3s ease-out,
+		-webkit-transform 0.3s ease-out;
+	display: inline-block;
+	vertical-align: middle;
+	width: 650px;
+	margin: 30px auto;
+	max-width: 97%;
+}
+.custom-model-wrap {
+	position: relative;
+	background-color: #fff;
+	border-radius: 0xp;
+	outline: 0;
+	padding: 15px;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	max-height: calc(100vh - 70px);
+	overflow-y: auto;
+	font-size: 20px;
+	line-height: 28px;
+}
+.close-btn {
+	position: absolute;
+	right: 0;
+	top: -30px;
+	cursor: pointer;
+	z-index: 99;
+	font-size: 30px;
+	color: #fff;
+}
+.pop-up-content-wrap {
+	border: 2px solid #8c8c8c;
+	padding: 40px 20px;
+}
+
+.custom-model-pop .home_btn {
+	font-size: 100%;
+	margin: 0;
+	line-height: 1;
+	cursor: pointer;
+	position: relative;
+	text-decoration: none;
+	overflow: visible;
+	padding: 0.618em 1em;
+	font-weight: 700;
+	border-radius: 3px;
+	left: auto;
+	border: 0;
+	display: inline-block;
+	background-image: none;
+	box-shadow: none;
+	text-shadow: none;
+	background-color: #000000;
+	color: #fff;
+	margin-top: 10px;
+}
+.custom-model-pop .login-btn {
+	padding: 10px;
+	display: inline-block;
+	background: grey;
+	color: white;
+	width: 45%;
+	margin: 0 auto;
+	margin-top: 10px;
+	border-radius: 15px;
+}
+
+.custom-model-pop .nothanks-btn {
+	padding: 10px;
+	display: inline-block;
+	background: grey;
+	color: white;
+	width: 45%;
+	margin: 0 auto;
+	margin-top: 10px;
+	border-radius: 15px;
+	cursor: pointer;
+}
+@media screen and (min-width: 800px) {
+	.custom-model-pop:before {
+		content: "";
+		display: inline-block;
+		height: auto;
+		vertical-align: middle;
+		margin-right: -0px;
+		height: 100%;
+	}
+}
+@media screen and (max-width: 799px) {
+	.custom-model-inner {
+		margin-top: 45%;
+	}
+	.custom-model-pop .login-btn,
+	.custom-model-pop .nothanks-btn {
+		display: block;
+		width: 90%;
+	}
+}
