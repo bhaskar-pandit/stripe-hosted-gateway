@@ -12,6 +12,8 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $this->id = 'stripe_hosted_gateway';
     $this->method_title = 'Stripe Hosted Checkout';
     $this->method_description = 'Customers pay using Stripe Hosted Checkout';
+    $this->icon = plugin_dir_url( __FILE__ ) . '/images/credit-cards.png'; // URL of the icon that will be displayed on checkout page near your gateway name
+
     // Other initialization code goes here
     
     $this->init_form_fields();
@@ -241,6 +243,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
     $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
     $OrderDataRaw->add_order_note( 'Payment Link: '.$PaymentRedirectUrl );
+    $OrderDataRaw->add_order_note( 'Payment Link Code: '.$this->store_code );
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
 
     try {
