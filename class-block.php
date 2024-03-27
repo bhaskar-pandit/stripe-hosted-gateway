@@ -10,9 +10,6 @@ final class Stripe_Hosted_Gateway_Blocks extends AbstractPaymentMethodType {
     public function initialize() {
         $this->settings = get_option( 'woocommerce_stripe_hosted_gateway_settings', [] );
         $this->gateway = new Stripe_Hosted_Gateway();
-        
-
-
     }
 
     public function is_active() {

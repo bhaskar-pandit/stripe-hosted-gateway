@@ -51,10 +51,10 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
     
     // Overall stat data query
-    $this->stat_data_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+    $this->stat_data_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_sales) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
 
     // Today's stat data query
-    $this->today_stat_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_amount) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id WHERE ".$tablePrefix."order_gateway_data.store_code<>'' AND DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+    $this->today_stat_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_sales) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id WHERE ".$tablePrefix."order_gateway_data.store_code<>'' AND DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
     
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );
@@ -221,7 +221,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     global $woocommerce, $wpdb;
 
     $OrderDataRaw = wc_get_order($order_id);
-    $OrderDataRaw->update_status( 'cancelled' );
+    $OrderDataRaw->update_status( 'pending' );
     
     
     $cart_total = $OrderDataRaw->get_total();
@@ -231,13 +231,12 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $skipCardMin = ($cart_total < $this->min_order_total)?true:false;
 
     $paymentSiteData = $this->get_payment_site_data();
-    // print_r($paymentSiteData);
-    // exit;
+    
 
     $paymenturl = $paymentSiteData['safe_payment_link'] ?? "";
     if ($this->testmode) { $TestParam = '&test=yes'; }
     $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key.$TestParam;
-
+  
     $storeCode = $paymentSiteData['safe_store_code'] ?? "";
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
     $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
@@ -250,11 +249,9 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
         'payment_url' => $PaymentRedirectUrl,
         'store_code' => $storeCode,
       ));
-      wc_add_notice($this->wpdb->last_query, 'error' ); 
-      return;
+
     } catch (\Throwable $th) {
-      wc_add_notice(print_r($th,true), 'error' ); 
-      return;
+      
     }
    
     if($skipCardMax){ 
@@ -268,7 +265,9 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     if ($skipCardMax || $skipCardMin) {
       $OrderDataRaw->update_status( 'on-hold' );
       $OrderDataRaw->add_order_note( 'Process Payment using this link: '.$PaymentRedirectUrl );
-      wp_die($error_message);
+      
+      wc_add_notice($error_message, 'error' ); 
+      return;
     }
     
 
@@ -283,7 +282,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
   public function get_payment_site_data() {
     $todayAllSiteStatData = $this->wpdb->get_results($this->today_stat_query);
-
+    print_r($todayAllSiteStatData);
     $allSiteDataArray = array();
     if(!empty($todayAllSiteStatData)) {
       foreach($this->safe_site_details as $data) {
