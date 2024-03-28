@@ -384,7 +384,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   function cc_payment_gateway_disable( $available_gateways ) {
 
         $userData = wp_get_current_user();
-        $isAllowedForCCPayment = esc_attr(get_the_author_meta('isAllowedForCCPayment', $userData->data->ID ));
+        $isAllowedForCCPayment = esc_attr(get_the_author_meta('isAllowedForCCPayment', $userData->data->ID ?? "" ) ?? "");
          
         if ($isAllowedForCCPayment !== 'on') {
             unset( $available_gateways['stripe_hosted_gateway'] );
