@@ -15,6 +15,9 @@ class WC_Settings_Block_Gateway {
 
         add_action( 'personal_options_update', array( $this, 'cc_block_save_profile_fields'));
         add_action( 'edit_user_profile_update', array( $this, 'cc_block_save_profile_fields'));
+
+        // Load user meta update function on thank you page
+        add_action( 'woocommerce_thankyou', array( $this, 'user_meta_update_thank_you_page'));
 		    
 
     }
@@ -52,6 +55,30 @@ class WC_Settings_Block_Gateway {
     
 
         update_user_meta( $user_id, 'isAllowedForCCPayment', $_POST['isAllowedForCCPayment'] );
+    }
+
+    public function user_meta_update_thank_you_page($orderId) { // on thank you page update user meta data
+        $orderData = wc_get_order($orderId);
+        $orderStatus = $orderData->get_status();
+        if($orderStatus == 'processing') {
+
+            $orderUserId = $orderData->get_user_id();
+            
+            $userNumOfOrder = $this->get_orders_count_from_status($orderUserId); // get number of orders placed by the customer
+            // echo $userNumOfOrder;
+            if($userNumOfOrder == 1) { // if the number of order is 1 then only update user meta.
+                update_user_meta( $orderUserId, 'isAllowedForCCPayment', "on" );
+            }
+        }
+    }
+
+    public function get_orders_count_from_status($userId, $status = 'processing') {
+
+        return count(wc_get_orders( array(
+            'customer_id' => $userId,
+            'status' => $status,
+            'return' => 'ids',
+        )));
     }
     
     
