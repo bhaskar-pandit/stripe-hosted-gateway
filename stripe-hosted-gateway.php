@@ -10,6 +10,14 @@ Requires WooCommerce: 8.6.0
 */
 
 // Your plugin code goes here
+/*
+// Add user meta data when an user created if plugin activated
+function wpse_update_user_meta_data_for_cc_payment_gateway( $user_id ) {
+    update_user_meta( $user_id, 'isAllowedForCCPayment', "on" );
+}
+// Fire late to try to ensure this is done after any other function hooked to `user_register`.
+add_action( 'user_register','wpse_update_user_meta_data_for_cc_payment_gateway', PHP_INT_MAX, 1 );
+*/
 
 // Create order_gateway_data table on activation of plugin
 register_activation_hook( __FILE__, 'wp_create_order_gateway_data_table' );
