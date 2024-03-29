@@ -43,6 +43,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 			array(
 				array(
 					'safe_store_code'   => $this->get_option( 'safe_store_code' ),
+					'safe_referrer_link' => $this->get_option( 'safe_referrer_link' ),
 					'safe_payment_link' => $this->get_option( 'safe_payment_link' ),
 					'cap_amount'      => $this->get_option( 'cap_amount' ),
 					'cap_order_count'      => $this->get_option( 'cap_order_count' ),
@@ -66,7 +67,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     add_action( 'woocommerce_after_checkout_form', array( $this, 'add_code_on_body_open'));
 
     
-    add_filter( 'woocommerce_available_payment_gateways', array( $this, 'cc_payment_gateway_disable'));
+    add_filter( 'woocommerce_available_payment_gateways', array( $this, 'sop_payment_gateway_disable'));
   }
   
   
@@ -115,13 +116,13 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
           ),
          
           'max_order_total' => array(
-              'title'       => 'Enter the Max Amount',
+              'title'       => 'Enter the Max Cart Amount',
               'type'        => 'text',
               'description' => 'If user exceed this amount in cart then they cannot place order using credit card.',
               'desc_tip'    => true,
           ),
           'min_order_total' => array(
-              'title'       => 'Enter the Min Amount',
+              'title'       => 'Enter the Min Cart Amount',
               'type'        => 'text',
               'description' => 'If user dont add this amount in cart then they cannot place order using credit card.',
               'desc_tip'    => true,
@@ -191,12 +192,13 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
       $gateways = array();
 
 
-      if ( isset( $_POST['safe_store_code'] ) && isset( $_POST['safe_payment_link'] ) && isset( $_POST['cap_amount'] ) ) {
+      if ( isset( $_POST['safe_store_code'] ) && isset( $_POST['safe_payment_link'] ) && isset( $_POST['safe_referrer_link'] ) && isset( $_POST['cap_amount'] ) ) {
 
-        $safe_store_codes    = wc_clean( wp_unslash( $_POST['safe_store_code'] ) );
+        $safe_store_codes     = wc_clean( wp_unslash( $_POST['safe_store_code'] ) );
+        $safe_referrer_links  = wc_clean( wp_unslash( $_POST['safe_referrer_link'] ) );
         $safe_payment_links   = wc_clean( wp_unslash( $_POST['safe_payment_link'] ) );
-        $cap_amounts            = wc_clean( wp_unslash( $_POST['cap_amount'] ) );
-        $cap_order_counts          = wc_clean( wp_unslash( $_POST['cap_order_count'] ) );
+        $cap_amounts          = wc_clean( wp_unslash( $_POST['cap_amount'] ) );
+        $cap_order_counts     = wc_clean( wp_unslash( $_POST['cap_order_count'] ) );
        
 
         foreach ( $safe_store_codes as $i => $name ) {
@@ -206,6 +208,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
           $gateways[$safe_store_codes[$i]] = array(
             'safe_store_code'      => $safe_store_codes[ $i ],
+            'safe_referrer_link'    => $safe_referrer_links[ $i ],
             'safe_payment_link'    => $safe_payment_links[ $i ],
             'cap_amount'        => $cap_amounts[ $i ],
             'cap_order_count'        => $cap_order_counts[ $i ],
@@ -225,7 +228,19 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
  
     
       
+	public function payment_fields() {
 
+      // ok, let's display some description before the payment form
+      if ( $this->description ) {
+          // you can instructions for test mode, I mean test card numbers etc.
+          if ( $this->testmode ) {
+              $this->description .= '<br><br><h3>TEST MODE ENABLED.</h3>';
+              $this->description  = trim( $this->description );
+          }
+          // display the description with <p> tags etc.
+          echo wpautop( wp_kses_post( $this->description ) );
+      }
+  }
         
         
       
@@ -249,12 +264,13 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     
 
     $paymenturl = $paymentSiteData['safe_payment_link'] ?? "";
+    $referrerUrl = $paymentSiteData['safe_referrer_link'] ?? "";
     if ($this->testmode) { $TestParam = '&test=yes'; }
-    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key.$TestParam;
+    $params = 'AFFID='.$this->store_code.'&id='.$order_id.'&total='.$cart_total .'&currency='.$OrderDataRaw->currency.'&wc_key='.$OrderDataRaw->order_key.'&pu='.$paymenturl.$TestParam;
   
     $storeCode = $paymentSiteData['safe_store_code'] ?? "";
     $encdeParam = $this->encrypt_decrypt($params, 'encrypt');
-    $PaymentRedirectUrl = $paymenturl .'?cue='. $encdeParam;
+    $PaymentRedirectUrl = $referrerUrl .'?cue='. $encdeParam;
     $OrderDataRaw->add_order_note( 'Payment Link: '.$PaymentRedirectUrl );
     $OrderDataRaw->add_order_note( 'Payment Link Code: '.$storeCode );
     $OrderDataRaw->update_meta_data( 'payment_link', $PaymentRedirectUrl );
@@ -298,14 +314,18 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
   public function get_payment_site_data() {
     $todayAllSiteStatData = $this->wpdb->get_results($this->today_stat_query);
-    print_r($todayAllSiteStatData);
     $allSiteDataArray = array();
     if(!empty($todayAllSiteStatData)) {
       foreach($this->safe_site_details as $data) {
         $todayStatDataKey = array_search($data['safe_store_code'], array_column($todayAllSiteStatData, 'store_code'));
         if($todayStatDataKey !== false) {
           $todayStatData = $todayAllSiteStatData[$todayStatDataKey];
-          if($todayStatData->site_total_orders < $data['cap_order_count'] && $todayStatData->site_total_order_amount < $data['cap_amount']) {
+          // if($todayStatData->site_total_orders < $data['cap_order_count'] && $todayStatData->site_total_order_amount < $data['cap_amount']) {
+          if(($todayStatData->site_total_orders < $data['cap_order_count'] && $todayStatData->site_total_order_amount < $data['cap_amount']) 
+          || ($data['cap_order_count'] === '' && $todayStatData->site_total_order_amount < $data['cap_amount']
+          || $data['cap_amount'] === '' && $todayStatData->site_total_orders < $data['cap_order_count'])) {
+
+
             $data['today_order_amount'] = $todayStatData->site_total_order_amount;
             $data['today_order_count'] = $todayStatData->site_total_orders;
             
@@ -381,15 +401,33 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 	}
 
 
-  function cc_payment_gateway_disable( $available_gateways ) {
-
+  function sop_payment_gateway_disable( $available_gateways ) {
+      if (is_checkout()) {
+       
         $userData = wp_get_current_user();
         $isAllowedForCCPayment = esc_attr(get_the_author_meta('isAllowedForCCPayment', $userData->data->ID ));
-         
+        $paymentSiteData = $this->get_payment_site_data();
+
+        
         if ($isAllowedForCCPayment !== 'on') {
             unset( $available_gateways['stripe_hosted_gateway'] );
         }
+
+        if (!$paymentSiteData) {
+            unset( $available_gateways['stripe_hosted_gateway'] );
+        }
+
+
+        // echo "<pre style='margin-left: 15%;margin-top: 4%;'>";
+        // print_r($paymentSiteData);
+        // echo "</pre>";
+
+        
         return $available_gateways;
+         
+      }
+
+      
     }
 	
 
