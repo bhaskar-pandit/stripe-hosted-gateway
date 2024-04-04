@@ -64,7 +64,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );   
 
 
-    add_action( 'woocommerce_after_checkout_form', array( $this, 'add_code_on_body_open'));
+    add_action( 'woocommerce_after_checkout_form', array( $this, 'add_code_on_body_open'));  
 
     
     add_filter( 'woocommerce_available_payment_gateways', array( $this, 'sop_payment_gateway_disable'));
