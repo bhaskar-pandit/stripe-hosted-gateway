@@ -33,6 +33,7 @@ function wp_create_order_gateway_data_table() {
         order_id bigint UNSIGNED NOT NULL,
         payment_url varchar(500),
         store_code varchar(250),
+        is_active enum('1','0') DEFAULT '1',
         created_at datetime DEFAULT CURRENT_TIMESTAMP() NOT NULL,
         PRIMARY KEY (id)
     ) $charset_collate;";
