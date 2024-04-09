@@ -57,6 +57,10 @@ function woocommerce_stripe_hosted_gateway_plugin(){
     function stripe_hosted_gateway_action_links( $links ) {
 
         $links[] = '<a href="'. menu_page_url( 'wc-settings', false ) .'&tab=checkout&section=stripe_hosted_gateway">Settings</a>';
+
+        // Adding Check for update link for plugin
+        $links[] = '<a href="'.menu_page_url('check-update', false).'">'.esc_html( 'Check for updates' ).'</a>';
+
         return $links;
     }
 
@@ -109,4 +113,51 @@ function stripe_hosted_register_order_approval_payment_method_type() {
         }
     );
 }
+
+
+// Create update link URL for plugin
+function wpdocs_register_my_custom_menu_page() {
+	add_menu_page(
+		__( 'Update Stripe Hosted Gateway'),
+		'',
+		'manage_options',
+		'check-update',
+		'my_plugin_check_update_callback',
+	);
+}
+add_action( 'admin_menu', 'wpdocs_register_my_custom_menu_page' );
+function my_plugin_check_update_callback() {
+    require "check-update/update.php";
+}
+
+add_action( 'init', 'github_plugin_updater_test_init' );
+function github_plugin_updater_test_init() {
+
+	include_once 'updater.php';
+
+	define( 'WP_GITHUB_FORCE_UPDATE', true );
+
+	if ( is_admin() ) { // note the use of is_admin() to double check that this is happening in the admin
+
+		$config = array(
+			'slug' => plugin_basename( __FILE__ ),
+			'proper_folder_name' => 'stripe-hosted-gateway',
+			'api_url' => 'https://api.github.com/repos/bhaskar-pandit/stripe-hosted-gateway',
+			'raw_url' => 'https://raw.github.com/bhaskar-pandit/stripe-hosted-gateway/dibyendu',
+			'github_url' => 'https://github.com/bhaskar-pandit/stripe-hosted-gateway',
+			'zip_url' => 'https://github.com/bhaskar-pandit/stripe-hosted-gateway/archive/dibyendu.zip',
+			'sslverify' => true,
+			'requires' => '1.0',
+			'tested' => '1.0',
+			'readme' => 'README.md',
+			'access_token' => '',
+		);
+
+		new WP_GitHub_Updater( $config );
+
+	}
+
+}
+
+
 ?>
