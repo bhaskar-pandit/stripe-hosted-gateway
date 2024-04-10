@@ -117,17 +117,26 @@ function stripe_hosted_register_order_approval_payment_method_type() {
 
 // Create update link URL for plugin
 function wpdocs_register_my_custom_menu_page() {
-	add_menu_page(
-		__( 'Update Stripe Hosted Gateway'),
-		'',
-		'manage_options',
-		'check-update',
-		'my_plugin_check_update_callback',
-	);
+	// add_menu_page(
+	// 	__( 'Update Stripe Hosted Gateway'),
+	// 	'',
+	// 	'manage_options',
+	// 	'check-update',
+	// 	'my_plugin_check_update_callback',
+	// );
+
+    add_options_page(
+        __( 'Update Stripe Hosted Gateway', 'textdomain' ),
+        __( 'Update Stripe Hosted Gateway', 'textdomain' ),
+        'manage_options',
+        'check-update',
+        'my_plugin_check_update_callback'
+    );
 }
 add_action( 'admin_menu', 'wpdocs_register_my_custom_menu_page' );
 function my_plugin_check_update_callback() {
     require "check-update/update.php";
+    // echo "hello";
 }
 
   // end
