@@ -27,7 +27,7 @@
         $mainFolderName = str_replace("/","",$mainFolderName);
         $zip->close();
         
-       echo $fs->move( WP_PLUGIN_DIR.'/'.$mainFolderName, WP_PLUGIN_DIR.'/'.$config['folder_name'], true );
+        $fs->move( WP_PLUGIN_DIR.'/'.$mainFolderName, WP_PLUGIN_DIR.'/'.$config['folder_name'], true );
     }
 
     $activate = activate_plugin( WP_PLUGIN_DIR.'/'.$config['slug'] );
