@@ -2,7 +2,11 @@
 /*
 Plugin Name: WooCommerce Custom Stripe Hosted Gateway
 Description: WooCommerce Custom Stripe Hosted Gateway Integration
+<<<<<<< HEAD
 Version: 1.0.3
+=======
+Version: 1.0.4
+>>>>>>> 18de631735db636157912398022b8ed69d91330c
 Author: Codeclouds
 Author URI: codeclouds.com
 Requires at least: 6.4.3
@@ -130,34 +134,6 @@ function my_plugin_check_update_callback() {
     require "check-update/update.php";
 }
 
-add_action( 'init', 'github_plugin_updater_test_init' );
-function github_plugin_updater_test_init() {
-
-	include_once 'updater.php';
-
-	define( 'WP_GITHUB_FORCE_UPDATE', true );
-
-	if ( is_admin() ) { // note the use of is_admin() to double check that this is happening in the admin
-
-		$config = array(
-			'slug' => plugin_basename( __FILE__ ),
-			'proper_folder_name' => 'stripe-hosted-gateway',
-			'api_url' => 'https://api.github.com/repos/bhaskar-pandit/stripe-hosted-gateway',
-			'raw_url' => 'https://raw.github.com/bhaskar-pandit/stripe-hosted-gateway/dibyendu',
-			'github_url' => 'https://github.com/bhaskar-pandit/stripe-hosted-gateway',
-			'zip_url' => 'https://github.com/bhaskar-pandit/stripe-hosted-gateway/archive/dibyendu.zip',
-			'sslverify' => true,
-			'requires' => '1.0',
-			'tested' => '1.0',
-			'readme' => 'README.md',
-			'access_token' => '',
-		);
-
-		new WP_GitHub_Updater( $config );
-
-	}
-
-}
 
 
 ?>

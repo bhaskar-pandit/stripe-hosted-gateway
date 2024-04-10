@@ -1,7 +1,7 @@
 <tr valign="top">
   <th scope="row" class="titledesc">
     <label>
-      <?php esc_html_e( 'Payment Site Details:', 'woocommerce' ); ?>
+      <?php esc_html_e( 'Payment Site Details TEST:', 'woocommerce' ); ?>
     </label>
   </th>
   <td class="forminp" id="accounts">
