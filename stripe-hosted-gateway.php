@@ -127,7 +127,7 @@ function wpdocs_register_my_custom_menu_page() {
 
     add_options_page(
         __( 'Update Stripe Hosted Gateway', 'textdomain' ),
-        __( 'Update Stripe Hosted Gateway', 'textdomain' ),
+        __( 'Update SHG', 'textdomain' ),
         'manage_options',
         'check-update',
         'my_plugin_check_update_callback'
