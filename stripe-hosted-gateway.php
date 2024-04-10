@@ -2,11 +2,7 @@
 /*
 Plugin Name: WooCommerce Custom Stripe Hosted Gateway
 Description: WooCommerce Custom Stripe Hosted Gateway Integration
-<<<<<<< HEAD
-Version: 1.0.3
-=======
 Version: 1.0.4
->>>>>>> 18de631735db636157912398022b8ed69d91330c
 Author: Codeclouds
 Author URI: codeclouds.com
 Requires at least: 6.4.3
