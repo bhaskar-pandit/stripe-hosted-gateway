@@ -59,7 +59,7 @@ function woocommerce_stripe_hosted_gateway_plugin(){
         $links[] = '<a href="'. menu_page_url( 'wc-settings', false ) .'&tab=checkout&section=stripe_hosted_gateway">Settings</a>';
 
         // Adding Check for update link for plugin
-        $links[] = '<a href="'.menu_page_url('check-update', false).'">'.esc_html( 'Check for updates' ).'</a>';
+        //$links[] = '<a href="'.menu_page_url('check-update', false).'">'.esc_html( 'Check for updates' ).'</a>';
 
         return $links;
     }
