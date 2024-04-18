@@ -2,7 +2,7 @@
 class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   
  // Deifine variables
-  public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details;     
+  public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details, $is_gateway_available_for_all;     
   public $wpdb, $safe_site_order_stat_data = array(), $stat_data_query, $today_stat_query;
   // Constructor method
   public function __construct() {
@@ -35,6 +35,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
     $this->payment_link = $this->get_option( 'payment_link' );
     $this->store_code = $this->get_option( 'store_code' );
     $this->is_login_pop = $this->get_option( 'is_login_pop' );
+    $this->is_gateway_available_for_all = $this->get_option( 'is_gateway_available_for_all' );
 
 
 
@@ -144,6 +145,13 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
               'label'       => 'Do you Want to show login Pop-Up?',
               'type'        => 'checkbox',
               'default'     => 'yes',
+              'desc_tip'    => true,
+          ),
+          'is_gateway_available_for_all' => array(
+              'title'       => 'Available for all',
+              'label'       => 'Do you want to make the gateway available for all user?',
+              'type'        => 'checkbox',
+              'default'     => 'no',
               'desc_tip'    => true,
           ),
          
@@ -418,10 +426,12 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
         $isAllowedForCCPayment = esc_attr(get_the_author_meta('isAllowedForCCPayment', $userData->data->ID ));
         $paymentSiteData = $this->get_payment_site_data();
 
-        
-        if ($isAllowedForCCPayment !== 'on') {
+
+        if($this->is_gateway_available_for_all !== 'yes') { // Checking if the gateway is available for all
+          if ($isAllowedForCCPayment !== 'on') {
             unset( $available_gateways['stripe_hosted_gateway'] );
-        }
+          }
+        }        
 
         if (!$paymentSiteData) {
             unset( $available_gateways['stripe_hosted_gateway'] );
