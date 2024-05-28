@@ -1,13 +1,28 @@
+/* The above code is a PHP snippet embedded within an HTML table structure. It seems to be related to
+managing payment site details in a WooCommerce environment. Here is a breakdown of what the code
+does: */
 <tr valign="top">
   <th scope="row" class="titledesc">
     <label>
-      <?php esc_html_e( 'Payment Site Details TEST:', 'woocommerce' ); ?>
+      <?php esc_html_e( 'Payment Site Details:', 'woocommerce' ); ?>
     </label>
   </th>
   <td class="forminp" id="accounts">
     <div class="wc_input_table_wrapper">
       <table class="widefat wc_input_table sortable" cellspacing="0" style="margin-bottom: 20px;">
         <thead>
+          <tr>
+            <th colspan="4" >
+              <?php
+              $date=date_create($this->db_time->now);
+              $db_time_now = date_format($date,'d/m/Y h:i A');
+              ?>
+              <h3>Current Time Now: <?= $db_time_now ?></h3> 
+            </th>
+            <th colspan="4" style="text-align: end;">
+              <h3 id="timer"></h3>
+            </th>
+          </tr>
           <tr>
             <th class="sort" style="width: 3%;">&nbsp;</th>
             <th style="width: 7%;"><?php esc_html_e( 'Code', 'woocommerce' ); ?></th>
@@ -114,6 +129,49 @@
           return false;
         });
       });
+
+
+
+        function startTimer(endTime) {
+          var end = new Date(endTime);
+          var now = new Date();
+
+          var timeRemaining = end - now;
+
+          var hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          var minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+          var seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+          hours = ("0" + hours).slice(-2);
+          minutes = ("0" + minutes).slice(-2);
+          seconds = ("0" + seconds).slice(-2);
+
+          var timerElement = document.getElementById("timer");
+          timerElement.innerHTML = "Cap Will Reset In: " + hours + "h " + minutes + "m " + seconds + "s";
+
+          var timer = setInterval(function () {
+            now = new Date();
+            timeRemaining = end - now;
+
+            hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+            hours = ("0" + hours).slice(-2);
+            minutes = ("0" + minutes).slice(-2);
+            seconds = ("0" + seconds).slice(-2);
+
+            if (timeRemaining < 0) {
+              clearInterval(timer);
+              timerElement.innerHTML = "Cap Reset!";
+            } else {
+              timerElement.innerHTML = "Cap Will Reset In: " + hours + "h " + minutes + "m " + seconds + "s";
+            }
+          }, 1000);
+        }
+
+
+        startTimer('<?=$this->db_time->tomorrow?>'); 
     </script>
   </td>
 </tr>

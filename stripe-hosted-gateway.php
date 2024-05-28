@@ -2,25 +2,20 @@
 /*
 Plugin Name: WooCommerce Custom Stripe Hosted Gateway
 Description: WooCommerce Custom Stripe Hosted Gateway Integration
-Version: 1.0.4
+Version: 1.0.1
 Author: Codeclouds
 Author URI: codeclouds.com
 Requires at least: 6.4.3
 Requires WooCommerce: 8.6.0
 */
 
-// Your plugin code goes here
-/*
-// Add user meta data when an user created if plugin activated
-function wpse_update_user_meta_data_for_cc_payment_gateway( $user_id ) {
-    update_user_meta( $user_id, 'isAllowedForCCPayment', "on" );
-}
-// Fire late to try to ensure this is done after any other function hooked to `user_register`.
-add_action( 'user_register','wpse_update_user_meta_data_for_cc_payment_gateway', PHP_INT_MAX, 1 );
-*/
 
 // Create order_gateway_data table on activation of plugin
 register_activation_hook( __FILE__, 'wp_create_order_gateway_data_table' );
+/**
+ * The function `wp_create_order_gateway_data_table` creates a database table in WordPress for storing
+ * order gateway data.
+ */
 function wp_create_order_gateway_data_table() {
     global $wpdb;
 
@@ -44,7 +39,18 @@ function wp_create_order_gateway_data_table() {
 }
 
 
+/* The `add_action('plugins_loaded', 'woocommerce_stripe_hosted_gateway_plugin', 0);` line in the code
+is hooking the `woocommerce_stripe_hosted_gateway_plugin` function to the `plugins_loaded` action in
+WordPress with a priority of `0`. */
 add_action('plugins_loaded', 'woocommerce_stripe_hosted_gateway_plugin', 0);
+/**
+ * The function `woocommerce_stripe_hosted_gateway_plugin` includes necessary files and sets up action
+ * links for a WooCommerce Stripe hosted gateway plugin.
+ * 
+ * @return The function `woocommerce_stripe_hosted_gateway_plugin` is returning nothing (`null`) if the
+ * `WC_Payment_Gateway` class does not exist. If the class exists, the function includes two PHP files
+ * (`class-gateway.php` and `cc-block-gateway.php`) and adds a filter for plugin action links.
+ */
 function woocommerce_stripe_hosted_gateway_plugin(){
     if (!class_exists('WC_Payment_Gateway'))
         return; // if the WC payment gateway class 
@@ -68,8 +74,19 @@ function woocommerce_stripe_hosted_gateway_plugin(){
 }
 
 
+/* The `add_filter('woocommerce_payment_gateways', 'add_stripe_hosted_gateway');` function call is
+adding a custom payment gateway to the list of available payment gateways in WooCommerce. */
 add_filter('woocommerce_payment_gateways', 'add_stripe_hosted_gateway');
 
+/**
+ * The function `add_stripe_hosted_gateway` adds the 'Stripe_Hosted_Gateway' to an array of gateways.
+ * 
+ * @param gateways The `add_stripe_hosted_gateway` function is designed to add a new gateway called
+ * `Stripe_Hosted_Gateway` to an array of existing gateways. The function takes an array of gateways as
+ * a parameter and appends the new gateway to that array.
+ * 
+ * @return an updated array of gateways with 'Stripe_Hosted_Gateway' added to it.
+ */
 function add_stripe_hosted_gateway($gateways) {
   $gateways[] = 'Stripe_Hosted_Gateway';
   return $gateways;
@@ -112,31 +129,6 @@ function stripe_hosted_register_order_approval_payment_method_type() {
             $payment_method_registry->register( new Stripe_Hosted_Gateway_Blocks );
         }
     );
-}
-
-
-// Create update link URL for plugin
-function wpdocs_register_my_custom_menu_page() {
-	// add_menu_page(
-	// 	__( 'Update Stripe Hosted Gateway'),
-	// 	'',
-	// 	'manage_options',
-	// 	'check-update',
-	// 	'my_plugin_check_update_callback',
-	// );
-
-    add_options_page(
-        __( 'Update Stripe Hosted Gateway', 'textdomain' ),
-        __( 'Update SHG', 'textdomain' ),
-        'manage_options',
-        'check-update',
-        'my_plugin_check_update_callback'
-    );
-}
-add_action( 'admin_menu', 'wpdocs_register_my_custom_menu_page' );
-function my_plugin_check_update_callback() {
-    require "check-update/update.php";
-    // echo "hello";
 }
 
   // end
