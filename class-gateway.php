@@ -1,10 +1,17 @@
 <?php
+/* The `Stripe_Hosted_Gateway` class is a WooCommerce payment gateway that allows customers to pay
+using Stripe Hosted Checkout, with features such as test mode, order total limits, safe site
+details, and dynamic selection of payment site based on certain criteria. */
 class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   
  // Deifine variables
-  public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details, $is_gateway_available_for_all;     
-  public $wpdb, $safe_site_order_stat_data = array(), $stat_data_query, $today_stat_query;
+  public $checkoutbuttontext, $testmode, $statement_descriptor, $skipCard,$safe_site_details_raw, $payment_link, $store_code, $max_order_total,$min_order_total,$safe_site_details,$is_gateway_available_for_all;     
+  public $wpdb, $safe_site_order_stat_data = array(), $stat_data_query, $today_stat_query,$db_time;
   // Constructor method
+  /**
+   * The function is a constructor for a WooCommerce payment gateway plugin for processing payments
+   * using Stripe Hosted Checkout with various settings and database queries.
+   */
   public function __construct() {
     global $wpdb;
 
@@ -56,11 +63,12 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
     
     // Overall stat data query
-    $this->stat_data_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_sales) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id WHERE ".$tablePrefix."order_gateway_data.is_active='1' AND ".$tablePrefix."wc_order_stats.status='wc-processing' GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+    $this->stat_data_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_sales) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id WHERE ".$tablePrefix."order_gateway_data.is_active='1' AND (".$tablePrefix."wc_order_stats.status='wc-processing' OR ".$tablePrefix."wc_order_stats.status='wc-completed') GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
 
     // Today's stat data query
-    $this->today_stat_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_sales) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id WHERE ".$tablePrefix."order_gateway_data.is_active='1' AND ".$tablePrefix."order_gateway_data.store_code<>'' AND DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() AND ".$tablePrefix."wc_order_stats.status='wc-processing' GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
-    
+     $this->today_stat_query = "SELECT ".$tablePrefix."order_gateway_data.store_code, COUNT(".$tablePrefix."wc_order_stats.order_id) AS site_total_orders, SUM(".$tablePrefix."wc_order_stats.total_sales) AS site_total_order_amount FROM ".$tablePrefix."order_gateway_data INNER JOIN ".$tablePrefix."wc_order_stats ON ".$tablePrefix."order_gateway_data.order_id=".$tablePrefix."wc_order_stats.order_id WHERE ".$tablePrefix."order_gateway_data.is_active='1' AND ".$tablePrefix."order_gateway_data.store_code<>'' AND DATE(".$tablePrefix."order_gateway_data.created_at)=CURDATE() AND (".$tablePrefix."wc_order_stats.status='wc-processing' OR ".$tablePrefix."wc_order_stats.status='wc-completed') GROUP BY ".$tablePrefix."order_gateway_data.store_code ORDER BY ".$tablePrefix."order_gateway_data.store_code";
+     
+     
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );   
 
@@ -74,6 +82,11 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   }
   
   
+/**
+ * The `init_form_fields` function in PHP initializes an array of form fields with various settings for
+ * a payment gateway, including store code, enable/disable options, title, description, test mode,
+ * checkout button text, max and min cart amounts, login pop-up option, and more.
+ */
   public function init_form_fields() {
     $this->form_fields = array(
 
@@ -162,12 +175,24 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   }
 
 
-  	public function generate_safe_site_details_html() {
+  	/**
+     * The function generates HTML content for safe site details by fetching data from database queries
+     * and populating an array with the results.
+     * 
+     * @return The function `generate_safe_site_details_html()` is returning the HTML content generated
+     * by including the "safe_site_details_html.php" file after populating the
+     * `->safe_site_order_stat_data` array with data from the `` and
+     * `` results.
+     */
+    public function generate_safe_site_details_html() {
       ob_start();
       
       $siteStatData = $this->wpdb->get_results($this->stat_data_query);
       $todaySiteStatData = $this->wpdb->get_results($this->today_stat_query);
-      
+      $timeNow = $this->wpdb->get_results('SELECT NOW() AS now, DATE_SUB(CURDATE(), INTERVAL 1 DAY) AS yesterday, DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 0 HOUR AS tomorrow;');
+      $this->db_time = $timeNow[0];
+
+
       foreach($this->safe_site_details as $data) {
         $statDataKey = array_search($data['safe_store_code'], array_column($siteStatData, 'store_code'));
         $todayStatDataKey = array_search($data['safe_store_code'], array_column($todaySiteStatData, 'store_code'));
@@ -196,6 +221,10 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
     /**
      * Save account details table.
+     */
+    /**
+     * The function `save_safe_site_details` saves safe site details entered via POST request into an
+     * array and updates the WooCommerce option for hosted gateways settings.
      */
     public function save_safe_site_details() {
 
@@ -238,6 +267,10 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
  
     
       
+/**
+ * The `payment_fields` function in PHP displays a description before the payment form, including
+ * handling test mode instructions.
+ */
 	public function payment_fields() {
 
       // ok, let's display some description before the payment form
@@ -256,6 +289,17 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
       
 
   // Process the payment
+  /**
+   * The function `process_payment` in PHP processes a payment for a WooCommerce order, generates a
+   * payment link, and handles error messages based on order total.
+   * 
+   * @param order_id The `order_id` parameter in the `process_payment` function represents the unique
+   * identifier of the order for which the payment is being processed. It is used to retrieve order
+   * details and update the order status accordingly during the payment processing flow.
+   * 
+   * @return An array is being returned with the keys 'result' and 'redirect'. The 'result' key has a
+   * value of 'success' and the 'redirect' key has a value of the payment redirect URL.
+   */
   public function process_payment($order_id) {
 
     global $woocommerce, $wpdb;
@@ -332,6 +376,16 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   }
 
 
+/**
+ * The function `get_payment_site_data` retrieves and processes payment site data for safe sites based
+ * on certain conditions and returns a randomly selected site's data.
+ * 
+ * @return The `get_payment_site_data` function returns the data of a payment site that meets certain
+ * conditions based on the provided input data. The function processes the input data to determine the
+ * payment site with remaining order amount and count based on specific criteria. The selected payment
+ * site data is then returned as an array containing information such as today's order amount, today's
+ * order count, remaining order amount, and remaining order
+ */
   public function get_payment_site_data() {
     $todayAllSiteStatData = $this->wpdb->get_results($this->today_stat_query);
     $allSiteDataArray = array();
@@ -397,6 +451,11 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
   }
 
 
+/**
+ * The function `add_code_on_body_open` checks if a user is not logged in, on the checkout page, and a
+ * specific setting is enabled, then it enqueues styles and scripts, and displays a custom login popup
+ * with options to login or skip.
+ */
   public function add_code_on_body_open() {
 		if ( !is_user_logged_in() && is_checkout() && $this->is_login_pop == 'yes' ) {
 			wp_enqueue_style( 'cc-styles-css', plugin_dir_url( __FILE__ ) .'assets/styles.css',false,time(),'all'); 
@@ -421,19 +480,24 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 	}
 
 
+/* The above PHP code defines a function named `sop_payment_gateway_disable` that takes an array of
+available payment gateways as input. The function is intended to disable certain payment gateways
+based on specific conditions or criteria. However, the actual logic for disabling the gateways is
+not provided in the code snippet you shared. */
   function sop_payment_gateway_disable( $available_gateways ) {
       if (is_checkout()) {
        
         $userData = wp_get_current_user();
         $isAllowedForCCPayment = esc_attr(get_the_author_meta('isAllowedForCCPayment', $userData->data->ID ));
+        if(!is_user_logged_in()){$isAllowedForCCPayment =  "";}
+
         $paymentSiteData = $this->get_payment_site_data();
 
-
-        if($this->is_gateway_available_for_all !== 'yes') { // Checking if the gateway is available for all
+         if($this->is_gateway_available_for_all !== 'yes') { // Checking if the gateway is available for all
           if ($isAllowedForCCPayment !== 'on') {
             unset( $available_gateways['stripe_hosted_gateway'] );
           }
-        }        
+        }  
 
         if (!$paymentSiteData) {
             unset( $available_gateways['stripe_hosted_gateway'] );
@@ -457,6 +521,21 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 
 
 
+/**
+ * The function `encrypt_decrypt` in PHP performs encryption and decryption using AES-256-CBC with a
+ * user-defined private key and secret key.
+ * 
+ * @param string The `encrypt_decrypt` function you provided is used for encrypting and decrypting a
+ * string using AES-256-CBC encryption algorithm.
+ * @param action The `action` parameter in the `encrypt_decrypt` function determines whether the input
+ * string should be encrypted or decrypted. If the `action` is set to 'encrypt', the function will
+ * encrypt the input string. If the `action` is set to 'decrypt', the function will decrypt the input
+ * string
+ * 
+ * @return The `encrypt_decrypt` function takes a string and an action (either 'encrypt' or 'decrypt')
+ * as input parameters. It uses AES-256-CBC encryption method with a secret key and initialization
+ * vector (IV) derived from user-defined keys.
+ */
   public function encrypt_decrypt($string, $action = 'encrypt')
   {
     $encrypt_method = "AES-256-CBC";
