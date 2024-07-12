@@ -189,7 +189,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
       
       $siteStatData = $this->wpdb->get_results($this->stat_data_query);
       $todaySiteStatData = $this->wpdb->get_results($this->today_stat_query);
-      $timeNow = $this->wpdb->get_results('SELECT NOW() AS now, DATE_SUB(CURDATE(), INTERVAL 1 DAY) AS yesterday, DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 0 HOUR AS tomorrow;');
+      $timeNow = $this->wpdb->get_results('SELECT NOW() AS now, DATE_SUB(CURDATE(), INTERVAL 1 DAY) AS yesterday, DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 0 HOUR AS tomorrow, TIMEDIFF(DATE_ADD(CURDATE(), INTERVAL 1 DAY) + INTERVAL 0 HOUR, NOW()) AS time_remaining;');
       $this->db_time = $timeNow[0];
 
 
