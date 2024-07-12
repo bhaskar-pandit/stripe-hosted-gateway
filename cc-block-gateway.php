@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 
-class WC_Settings_Block_Gateway {
+class WC_CC_Stripe_Settings_Block_Gateway {
 
   
    /**
@@ -138,4 +138,4 @@ class WC_Settings_Block_Gateway {
 
 }
 
-$WC_Settings_Block_Gateway =  new WC_Settings_Block_Gateway();
+$WC_CC_Stripe_Settings_Block_Gateway =  new WC_CC_Stripe_Settings_Block_Gateway();
