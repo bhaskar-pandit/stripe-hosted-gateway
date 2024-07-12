@@ -131,6 +131,41 @@ function stripe_hosted_register_order_approval_payment_method_type() {
     );
 }
 
+
+add_action( 'woocommerce_order_details_after_order_table', 'add_descriptor_on_thank_you_page');
+
+function add_descriptor_on_thank_you_page($order) {
+    $orderId = $order->id;
+    $descriptorImgURL = get_descriptor_image_link($orderId);
+    
+    echo "<br><br><h5>Please note: this is the transaction descriptor that will show up in your credit card statement -> <img src='$descriptorImgURL' style='width:25%;'></h5>";
+}
+
+function get_descriptor_image_link($orderId){
+    global $wpdb;
+    $tableName = $wpdb->prefix."order_gateway_data";
+
+    $orderGatewayQuery = "SELECT * FROM $tableName WHERE order_id=$orderId";
+    $orderGatewayData = $wpdb->get_row($orderGatewayQuery);
+
+    if($orderGatewayData) {
+        $gatewayOptions = get_option('woocommerce_stripe_hosted_gateways_settings');
+        $storeCode = $orderGatewayData->store_code;
+        
+        $orderedOption = $gatewayOptions[$storeCode];
+
+        $descriptorImgURL = $orderedOption['descriptor_image_link'];
+
+        return $descriptorImgURL;
+    }
+    else {
+        return "";
+    }
+
+
+}
+
+
   // end
 
 ?>

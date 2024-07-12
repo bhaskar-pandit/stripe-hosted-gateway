@@ -53,6 +53,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
 					'safe_store_code'   => $this->get_option( 'safe_store_code' ),
 					'safe_referrer_link' => $this->get_option( 'safe_referrer_link' ),
 					'safe_payment_link' => $this->get_option( 'safe_payment_link' ),
+					'descriptor_image_link' => $this->get_option( 'descriptor_image_link' ),
 					'cap_amount'      => $this->get_option( 'cap_amount' ),
 					'cap_order_count'      => $this->get_option( 'cap_order_count' ),
 				),
@@ -70,7 +71,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
      
      
     add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options'));
-    add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );   
+    add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'save_safe_site_details' ) );
 
 
     if($this->is_gateway_available_for_all !== 'yes') { // Checking if the gateway is available for all
@@ -236,6 +237,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
         $safe_store_codes     = wc_clean( wp_unslash( $_POST['safe_store_code'] ) );
         $safe_referrer_links  = wc_clean( wp_unslash( $_POST['safe_referrer_link'] ) );
         $safe_payment_links   = wc_clean( wp_unslash( $_POST['safe_payment_link'] ) );
+        $descriptor_image_links   = wc_clean( wp_unslash( $_POST['descriptor_image_link'] ) );
         $cap_amounts          = wc_clean( wp_unslash( $_POST['cap_amount'] ) );
         $cap_order_counts     = wc_clean( wp_unslash( $_POST['cap_order_count'] ) );
        
@@ -249,6 +251,7 @@ class Stripe_Hosted_Gateway extends WC_Payment_Gateway {
             'safe_store_code'      => $safe_store_codes[ $i ],
             'safe_referrer_link'    => $safe_referrer_links[ $i ],
             'safe_payment_link'    => $safe_payment_links[ $i ],
+            'descriptor_image_link'    => $descriptor_image_links[ $i ],
             'cap_amount'        => $cap_amounts[ $i ],
             'cap_order_count'        => $cap_order_counts[ $i ],
           );
