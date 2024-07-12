@@ -131,47 +131,41 @@ does: */
       });
 
 
+           function startTimer(timeRemaining) {
+                var timerElement = document.getElementById('timer');
 
-        function startTimer(endTime) {
-          var end = new Date(endTime);
-          var now = new Date();
+                var hours = parseInt(timeRemaining.split(":")[0]);
+                var minutes = parseInt(timeRemaining.split(":")[1]);
+                var seconds = parseInt(timeRemaining.split(":")[2]);
 
-          var timeRemaining = end - now;
+                var timer = setInterval(function() {
+                    if (hours == 0 && minutes == 0 && seconds == 0) {
+                        clearInterval(timer);
+                        timerElement.innerHTML = 'Timer has ended!';
+                    } else {
+                        if (seconds == 0) {
+                            if (minutes == 0) {
+                                hours--;
+                                minutes = 59;
+                                seconds = 59;
+                            } else {
+                                minutes--;
+                                seconds = 59;
+                            }
+                        } else {
+                            seconds--;
+                        }
 
-          var hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-          var minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-          var seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+                        var hoursDisplay = ('0' + hours).slice(-2);
+                        var minutesDisplay = ('0' + minutes).slice(-2);
+                        var secondsDisplay = ('0' + seconds).slice(-2);
 
-          hours = ("0" + hours).slice(-2);
-          minutes = ("0" + minutes).slice(-2);
-          seconds = ("0" + seconds).slice(-2);
-
-          var timerElement = document.getElementById("timer");
-          timerElement.innerHTML = "Cap Will Reset In: " + hours + "h " + minutes + "m " + seconds + "s";
-
-          var timer = setInterval(function () {
-            now = new Date();
-            timeRemaining = end - now;
-
-            hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-            seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-            hours = ("0" + hours).slice(-2);
-            minutes = ("0" + minutes).slice(-2);
-            seconds = ("0" + seconds).slice(-2);
-
-            if (timeRemaining < 0) {
-              clearInterval(timer);
-              timerElement.innerHTML = "Cap Reset!";
-            } else {
-              timerElement.innerHTML = "Cap Will Reset In: " + hours + "h " + minutes + "m " + seconds + "s";
+                        timerElement.innerHTML = 'Cap will reset in: ' + hoursDisplay + 'h ' + minutesDisplay + 'm ' + secondsDisplay + 's';
+                    }
+                }, 1000);
             }
-          }, 1000);
-        }
 
-
-        startTimer('<?=$this->db_time->tomorrow?>'); 
+            startTimer('<?=$this->db_time->time_remaining?>');
     </script>
   </td>
 </tr>
