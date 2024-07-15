@@ -34,6 +34,10 @@ does: */
               <?php esc_html_e( 'Payment Link', 'woocommerce' ); ?>
               <?php echo wc_help_tip('This will be the payment link. Get the url from your payment site after install the plugin.'); ?>
             </th>
+            <th style="width: 20%;">
+              <?php esc_html_e( 'Descriptor Link', 'woocommerce' ); ?>
+              <?php echo wc_help_tip('This will be the image link of the descriptor image which will show on the Thank you page. Image height should be 25 pixel.'); ?>
+            </th>
             <th style="width: 4%;">
               <?php esc_html_e( 'Cap Amount', 'woocommerce' ); ?>(<?=get_woocommerce_currency_symbol()?>)
               <?php echo wc_help_tip('Cap Amount set blank if you want want to use this contition in load balncing'); ?>
@@ -61,6 +65,7 @@ does: */
                   <td><input type="text" value="<?= esc_attr( $safe_site['safe_store_code'] ) ?>" name="safe_store_code[<?= esc_attr( $i ) ?>]" /></td>
                   <td><input type="text" value="<?= esc_attr( $safe_site['safe_referrer_link'] ) ?>" name="safe_referrer_link[<?= esc_attr( $i ) ?>]" /></td>
                   <td><input type="text" value="<?= esc_attr( $safe_site['safe_payment_link'] ) ?>" name="safe_payment_link[<?= esc_attr( $i ) ?>]" /></td>
+                  <td><input type="text" value="<?= esc_attr( $safe_site['descriptor_image_link'] ) ?>" name="descriptor_image_link[<?= esc_attr( $i ) ?>]" /></td>
                   
                   <td>
                       <input type="text" value="<?= esc_attr( $safe_site['cap_amount'] ) ?>" name="cap_amount[<?= esc_attr( $i ) ?>]" /> <br>
@@ -120,6 +125,7 @@ does: */
               <td><input type="text" name="safe_store_code[' + size + ']" /></td>\
               <td><input type="text" name="safe_referrer_link[' + size + ']" /></td>\
               <td><input type="text" name="safe_payment_link[' + size + ']" /></td>\
+              <td><input type="text" name="descriptor_image_link[' + size + ']" /></td>\
               <td><input type="text" name="cap_amount[' + size + ']" /></td>\
               <td><input type="text" name="cap_order_count[' + size + ']" /></td>\
               <td></td>\
