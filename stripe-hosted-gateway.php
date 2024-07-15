@@ -132,9 +132,9 @@ function stripe_hosted_register_order_approval_payment_method_type() {
 }
 
 
-/* 
-Hook and function to add the descriptor text and image in the Thank you page.
-*/
+/**
+ * Hook and function to add the descriptor text and image in the Thank you page.
+**/
 add_action( 'woocommerce_order_details_after_order_table', 'add_descriptor_on_thank_you_page');
 
 // Function to add the descriptor text and image
