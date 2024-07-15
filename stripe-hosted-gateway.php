@@ -132,8 +132,12 @@ function stripe_hosted_register_order_approval_payment_method_type() {
 }
 
 
+/* 
+Hook and function to add the descriptor text and image in the Thank you page.
+*/
 add_action( 'woocommerce_order_details_after_order_table', 'add_descriptor_on_thank_you_page');
 
+// Function to add the descriptor text and image
 function add_descriptor_on_thank_you_page($order) {
     $orderId = $order->id;
     $descriptorImgURL = get_descriptor_image_link($orderId);
@@ -141,6 +145,7 @@ function add_descriptor_on_thank_you_page($order) {
     echo "<h5 style='margin-top:50px;'>Please note: this is the transaction descriptor that will show up in your credit card statement -> <img src='$descriptorImgURL' style='position:relative;top: 7px;'></h5>";
 }
 
+// Fetch the descriptor image based on payment link
 function get_descriptor_image_link($orderId){
     global $wpdb;
     $tableName = $wpdb->prefix."order_gateway_data";
