@@ -36,7 +36,7 @@ does: */
             </th>
             <th style="width: 20%;">
               <?php esc_html_e( 'Descriptor Link', 'woocommerce' ); ?>
-              <?php echo wc_help_tip('This will be the image link of the descriptor image which will show on the Thank you page.'); ?>
+              <?php echo wc_help_tip('This will be the image link of the descriptor image which will show on the Thank you page. Image height should be 25 pixel.'); ?>
             </th>
             <th style="width: 4%;">
               <?php esc_html_e( 'Cap Amount', 'woocommerce' ); ?>(<?=get_woocommerce_currency_symbol()?>)

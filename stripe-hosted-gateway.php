@@ -138,7 +138,7 @@ function add_descriptor_on_thank_you_page($order) {
     $orderId = $order->id;
     $descriptorImgURL = get_descriptor_image_link($orderId);
     
-    echo "<br><br><h5>Please note: this is the transaction descriptor that will show up in your credit card statement -> <img src='$descriptorImgURL' style='width:25%;'></h5>";
+    echo "<h5 style='margin-top:50px;'>Please note: this is the transaction descriptor that will show up in your credit card statement -> <img src='$descriptorImgURL' style='position:relative;top: 7px;'></h5>";
 }
 
 function get_descriptor_image_link($orderId){
